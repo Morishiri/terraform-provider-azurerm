@@ -2660,7 +2660,10 @@ resource "azurerm_virtual_machine_scale_set" "test" {
 
   os_profile_linux_config {
     disable_password_authentication = false
+<<<<<<< HEAD
     provision_vm_agent              = true
+=======
+>>>>>>> e46119f6821ec4d02d0e2091ba5a070d3ff95b15
 
     ssh_keys {
       path     = "/home/ubuntu/.ssh/authorized_keys"
@@ -3830,7 +3833,10 @@ resource "azurerm_virtual_machine_scale_set" "test" {
 
   os_profile_linux_config {
     disable_password_authentication = false
+<<<<<<< HEAD
     provision_vm_agent              = true
+=======
+>>>>>>> e46119f6821ec4d02d0e2091ba5a070d3ff95b15
 
     ssh_keys {
       path     = "/home/myadmin/.ssh/authorized_keys"

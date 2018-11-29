@@ -45,6 +45,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2018-03-01-preview/management"
 	"github.com/Azure/azure-sdk-for-go/services/preview/security/mgmt/2017-08-01-preview/security"
 	"github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql"
+	MsSql "github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-10-01-preview/sql"
 	"github.com/Azure/azure-sdk-for-go/services/recoveryservices/mgmt/2016-06-01/backup"
 	"github.com/Azure/azure-sdk-for-go/services/recoveryservices/mgmt/2016-06-01/recoveryservices"
 	"github.com/Azure/azure-sdk-for-go/services/redis/mgmt/2018-03-01/redis"
@@ -180,10 +181,12 @@ type ArmClient struct {
 	sqlDatabasesClient                       sql.DatabasesClient
 	sqlDatabaseThreatDetectionPoliciesClient sql.DatabaseThreatDetectionPoliciesClient
 	sqlElasticPoolsClient                    sql.ElasticPoolsClient
-	sqlFirewallRulesClient                   sql.FirewallRulesClient
-	sqlServersClient                         sql.ServersClient
-	sqlServerAzureADAdministratorsClient     sql.ServerAzureADAdministratorsClient
-	sqlVirtualNetworkRulesClient             sql.VirtualNetworkRulesClient
+	// Client for the new 2017-10-01-preview SQL API which implements vCore, DTU, and Azure data standards
+	msSqlElasticPoolsClient              MsSql.ElasticPoolsClient
+	sqlFirewallRulesClient               sql.FirewallRulesClient
+	sqlServersClient                     sql.ServersClient
+	sqlServerAzureADAdministratorsClient sql.ServerAzureADAdministratorsClient
+	sqlVirtualNetworkRulesClient         sql.VirtualNetworkRulesClient
 
 	// Data Lake Store
 	dataLakeStoreAccountClient       storeAccount.AccountsClient
@@ -213,11 +216,13 @@ type ArmClient struct {
 	managementGroupsSubscriptionClient managementgroups.SubscriptionsClient
 
 	// Monitor
-	monitorActionGroupsClient      insights.ActionGroupsClient
-	monitorActivityLogAlertsClient insights.ActivityLogAlertsClient
-	monitorAlertRulesClient        insights.AlertRulesClient
-	monitorLogProfilesClient       insights.LogProfilesClient
-	monitorMetricAlertsClient      insights.MetricAlertsClient
+	monitorActionGroupsClient               insights.ActionGroupsClient
+	monitorActivityLogAlertsClient          insights.ActivityLogAlertsClient
+	monitorAlertRulesClient                 insights.AlertRulesClient
+	monitorDiagnosticSettingsClient         insights.DiagnosticSettingsClient
+	monitorDiagnosticSettingsCategoryClient insights.DiagnosticSettingsCategoryClient
+	monitorLogProfilesClient                insights.LogProfilesClient
+	monitorMetricAlertsClient               insights.MetricAlertsClient
 
 	// MSI
 	userAssignedIdentitiesClient msi.UserAssignedIdentitiesClient
@@ -690,6 +695,10 @@ func (c *ArmClient) registerDatabases(endpoint, subscriptionId string, auth auto
 	c.configureClient(&sqlEPClient.Client, auth)
 	c.sqlElasticPoolsClient = sqlEPClient
 
+	MsSqlEPClient := MsSql.NewElasticPoolsClientWithBaseURI(endpoint, subscriptionId)
+	c.configureClient(&MsSqlEPClient.Client, auth)
+	c.msSqlElasticPoolsClient = MsSqlEPClient
+
 	sqlSrvClient := sql.NewServersClientWithBaseURI(endpoint, subscriptionId)
 	c.configureClient(&sqlSrvClient.Client, auth)
 	c.sqlServersClient = sqlSrvClient
@@ -825,6 +834,14 @@ func (c *ArmClient) registerMonitorClients(endpoint, subscriptionId string, auth
 	autoscaleSettingsClient := insights.NewAutoscaleSettingsClientWithBaseURI(endpoint, subscriptionId)
 	c.configureClient(&autoscaleSettingsClient.Client, auth)
 	c.autoscaleSettingsClient = autoscaleSettingsClient
+
+	monitoringInsightsClient := insights.NewDiagnosticSettingsClientWithBaseURI(endpoint, subscriptionId)
+	c.configureClient(&monitoringInsightsClient.Client, auth)
+	c.monitorDiagnosticSettingsClient = monitoringInsightsClient
+
+	monitoringCategorySettingsClient := insights.NewDiagnosticSettingsCategoryClientWithBaseURI(endpoint, subscriptionId)
+	c.configureClient(&monitoringCategorySettingsClient.Client, auth)
+	c.monitorDiagnosticSettingsCategoryClient = monitoringCategorySettingsClient
 }
 
 func (c *ArmClient) registerNetworkingClients(endpoint, subscriptionId string, auth autorest.Authorizer) {

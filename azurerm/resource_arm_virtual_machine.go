@@ -1180,10 +1180,6 @@ func flattenAzureRmVirtualMachineOsProfileLinuxConfiguration(config *compute.Lin
 		result["disable_password_authentication"] = *v
 	}
 
-	if v := config.ProvisionVMAgent; v != nil {
-		result["provision_vm_agent"] = *v
-	}
-
 	if config.SSH != nil && len(*config.SSH.PublicKeys) > 0 {
 		ssh_keys := make([]map[string]interface{}, 0, len(*config.SSH.PublicKeys))
 		for _, i := range *config.SSH.PublicKeys {
@@ -1761,12 +1757,7 @@ func resourceArmVirtualMachineStorageOsProfileLinuxConfigHash(v interface{}) int
 	var buf bytes.Buffer
 
 	if m, ok := v.(map[string]interface{}); ok {
-		if v, ok := m["disable_password_authentication"]; ok {
-			buf.WriteString(fmt.Sprintf("%t-", v.(bool)))
-		}
-		if v, ok := m["provision_vm_agent"]; ok {
-			buf.WriteString(fmt.Sprintf("%t-", v.(bool)))
-		}
+		buf.WriteString(fmt.Sprintf("%t-", m["disable_password_authentication"].(bool)))
 	}
 
 	return hashcode.String(buf.String())
