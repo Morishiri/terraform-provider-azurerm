@@ -483,11 +483,6 @@ func resourceArmVirtualMachine() *schema.Resource {
 							Type:     schema.TypeBool,
 							Required: true,
 						},
-						"provision_vm_agent": {
-							Type:     schema.TypeBool,
-							Optional: true,
-							Default:  false,
-						},
 						"ssh_keys": {
 							Type:     schema.TypeList,
 							Optional: true,
@@ -1380,11 +1375,9 @@ func expandAzureRmVirtualMachineOsProfileLinuxConfig(d *schema.ResourceData) (*c
 
 	linuxConfig := osProfilesLinuxConfig[0].(map[string]interface{})
 	disablePasswordAuth := linuxConfig["disable_password_authentication"].(bool)
-	provisionVMAgent := linuxConfig["provision_vm_agent"].(bool)
 
 	config := &compute.LinuxConfiguration{
 		DisablePasswordAuthentication: &disablePasswordAuth,
-		ProvisionVMAgent:              &provisionVMAgent,
 	}
 
 	linuxKeys := linuxConfig["ssh_keys"].([]interface{})

@@ -1082,10 +1082,6 @@ func flattenAzureRmVirtualMachineScaleSetOsProfileLinuxConfig(config *compute.Li
 		result["disable_password_authentication"] = *v
 	}
 
-	if v := config.ProvisionVMAgent; v != nil {
-		result["provision_vm_agent"] = *v
-	}
-
 	if ssh := config.SSH; ssh != nil {
 		if keys := ssh.PublicKeys; keys != nil {
 			ssh_keys := make([]map[string]interface{}, 0, len(*keys))
@@ -1980,7 +1976,6 @@ func expandAzureRmVirtualMachineScaleSetOsProfileLinuxConfig(d *schema.ResourceD
 
 	linuxConfig := osProfilesLinuxConfig[0].(map[string]interface{})
 	disablePasswordAuth := linuxConfig["disable_password_authentication"].(bool)
-	provisionVMAgent := linuxConfig["provision_vm_agent"].(bool)
 
 	linuxKeys := linuxConfig["ssh_keys"].([]interface{})
 	sshPublicKeys := make([]compute.SSHPublicKey, 0, len(linuxKeys))
@@ -2002,7 +1997,6 @@ func expandAzureRmVirtualMachineScaleSetOsProfileLinuxConfig(d *schema.ResourceD
 
 	config := &compute.LinuxConfiguration{
 		DisablePasswordAuthentication: &disablePasswordAuth,
-		ProvisionVMAgent:              &provisionVMAgent,
 		SSH: &compute.SSHConfiguration{
 			PublicKeys: &sshPublicKeys,
 		},
