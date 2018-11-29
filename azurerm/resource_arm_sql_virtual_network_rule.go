@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
+
 	"github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -20,6 +22,7 @@ func resourceArmSqlVirtualNetworkRule() *schema.Resource {
 		Read:   resourceArmSqlVirtualNetworkRuleRead,
 		Update: resourceArmSqlVirtualNetworkRuleCreateUpdate,
 		Delete: resourceArmSqlVirtualNetworkRuleDelete,
+
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -35,9 +38,10 @@ func resourceArmSqlVirtualNetworkRule() *schema.Resource {
 			"resource_group_name": resourceGroupNameSchema(),
 
 			"server_name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: azure.ValidateMsSqlServerName,
 			},
 
 			"subnet_id": {
@@ -175,7 +179,7 @@ func resourceArmSqlVirtualNetworkRuleDelete(d *schema.ResourceData, meta interfa
 	This function checks the format of the SQL Virtual Network Rule Name to make sure that
 	it does not contain any potentially invalid values.
 */
-func validateSqlVirtualNetworkRuleName(v interface{}, k string) (ws []string, errors []error) {
+func validateSqlVirtualNetworkRuleName(v interface{}, k string) (warnings []string, errors []error) {
 	value := v.(string)
 
 	// Cannot be empty
@@ -211,7 +215,7 @@ func validateSqlVirtualNetworkRuleName(v interface{}, k string) (ws []string, er
 
 	// There are multiple returns in the case that there is more than one invalid
 	// case applied to the name.
-	return ws, errors
+	return warnings, errors
 }
 
 /*

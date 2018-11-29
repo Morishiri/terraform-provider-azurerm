@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-azure-helpers/authentication"
 	"github.com/hashicorp/terraform/helper/mutexkv"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/authentication"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
 )
 
@@ -323,9 +323,9 @@ func providerConfigure(p *schema.Provider) schema.ConfigureFunc {
 			MsiEndpoint:    d.Get("msi_endpoint").(string),
 
 			// Feature Toggles
-			SupportsClientSecretAuth:          true,
-			SupportsManagedServiceIdentity:    d.Get("use_msi").(bool),
-			SupportsAzureCliCloudShellParsing: true,
+			SupportsClientSecretAuth:       true,
+			SupportsManagedServiceIdentity: d.Get("use_msi").(bool),
+			SupportsAzureCliToken:          true,
 		}
 
 		config, err := builder.Build()

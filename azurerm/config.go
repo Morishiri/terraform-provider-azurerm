@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/profiles/2017-03-09/resources/mgmt/resources"
 	appinsights "github.com/Azure/azure-sdk-for-go/services/appinsights/mgmt/2015-05-01/insights"
 	"github.com/Azure/azure-sdk-for-go/services/automation/mgmt/2015-10-31/automation"
 	"github.com/Azure/azure-sdk-for-go/services/cdn/mgmt/2017-10-12/cdn"
@@ -52,8 +53,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/relay/mgmt/2017-04-01/relay"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2016-06-01/subscriptions"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2016-09-01/locks"
-	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2016-12-01/policy"
-	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2017-05-10/resources"
+	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/policy"
 	"github.com/Azure/azure-sdk-for-go/services/scheduler/mgmt/2016-03-01/scheduler"
 	"github.com/Azure/azure-sdk-for-go/services/search/mgmt/2015-08-19/search"
 	"github.com/Azure/azure-sdk-for-go/services/servicebus/mgmt/2017-04-01/servicebus"
@@ -66,9 +66,9 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/adal"
 	az "github.com/Azure/go-autorest/autorest/azure"
+	"github.com/hashicorp/go-azure-helpers/authentication"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform/httpclient"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/authentication"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 	"github.com/terraform-providers/terraform-provider-azurerm/version"
@@ -101,10 +101,11 @@ type ArmClient struct {
 	dnsClient   dns.RecordSetsClient
 	zonesClient dns.ZonesClient
 
-	containerRegistryClient  containerregistry.RegistriesClient
-	containerServicesClient  containerservice.ContainerServicesClient
-	kubernetesClustersClient containerservice.ManagedClustersClient
-	containerGroupsClient    containerinstance.ContainerGroupsClient
+	containerRegistryClient             containerregistry.RegistriesClient
+	containerRegistryReplicationsClient containerregistry.ReplicationsClient
+	containerServicesClient             containerservice.ContainerServicesClient
+	kubernetesClustersClient            containerservice.ManagedClustersClient
+	containerGroupsClient               containerinstance.ContainerGroupsClient
 
 	eventGridTopicsClient       eventgrid.TopicsClient
 	eventHubClient              eventhub.EventHubsClient
@@ -387,7 +388,7 @@ func getArmClient(c *authentication.Config, skipProviderRegistration bool) (*Arm
 
 	// Resource Manager endpoints
 	endpoint := env.ResourceManagerEndpoint
-	auth, err := c.GetAuthorizationToken(oauthConfig, endpoint)
+	auth, err := c.GetAuthorizationToken(oauthConfig, env.TokenAudience)
 	if err != nil {
 		return nil, err
 	}
@@ -612,6 +613,11 @@ func (c *ArmClient) registerContainerRegistryClients(endpoint, subscriptionId st
 	crc := containerregistry.NewRegistriesClientWithBaseURI(endpoint, subscriptionId)
 	c.configureClient(&crc.Client, auth)
 	c.containerRegistryClient = crc
+
+	// container registry replicalication client
+	crrc := containerregistry.NewReplicationsClientWithBaseURI(endpoint, subscriptionId)
+	c.configureClient(&crrc.Client, auth)
+	c.containerRegistryReplicationsClient = crrc
 }
 
 func (c *ArmClient) registerContainerServicesClients(endpoint, subscriptionId string, auth autorest.Authorizer) {

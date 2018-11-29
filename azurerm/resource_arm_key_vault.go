@@ -31,9 +31,11 @@ func resourceArmKeyVault() *schema.Resource {
 		Read:   resourceArmKeyVaultRead,
 		Update: resourceArmKeyVaultCreateUpdate,
 		Delete: resourceArmKeyVaultDelete,
+
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
+
 		MigrateState:  resourceAzureRMKeyVaultMigrateState,
 		SchemaVersion: 1,
 
@@ -215,7 +217,9 @@ func resourceArmKeyVaultCreateUpdate(d *schema.ResourceData, meta interface{}) e
 		}
 
 		virtualNetworkName := id.Path["virtualNetworks"]
-		virtualNetworkNames = append(virtualNetworkNames, virtualNetworkName)
+		if !sliceContainsValue(virtualNetworkNames, virtualNetworkName) {
+			virtualNetworkNames = append(virtualNetworkNames, virtualNetworkName)
+		}
 	}
 
 	azureRMLockMultipleByName(&virtualNetworkNames, virtualNetworkResourceName)
@@ -350,8 +354,10 @@ func resourceArmKeyVaultDelete(d *schema.ResourceData, meta interface{}) error {
 						return err2
 					}
 
-					networkName := id.Path["virtualNetworks"]
-					virtualNetworkNames = append(virtualNetworkNames, networkName)
+					virtualNetworkName := id.Path["virtualNetworks"]
+					if !sliceContainsValue(virtualNetworkNames, virtualNetworkName) {
+						virtualNetworkNames = append(virtualNetworkNames, virtualNetworkName)
+					}
 				}
 			}
 		}
@@ -425,13 +431,13 @@ func flattenKeyVaultNetworkAcls(input *keyvault.NetworkRuleSet) []interface{} {
 	return []interface{}{output}
 }
 
-func validateKeyVaultName(v interface{}, k string) (ws []string, errors []error) {
+func validateKeyVaultName(v interface{}, k string) (warnings []string, errors []error) {
 	value := v.(string)
 	if matched := regexp.MustCompile(`^[a-zA-Z0-9-]{3,24}$`).Match([]byte(value)); !matched {
 		errors = append(errors, fmt.Errorf("%q may only contain alphanumeric characters and dashes and must be between 3-24 chars", k))
 	}
 
-	return ws, errors
+	return warnings, errors
 }
 
 func keyVaultRefreshFunc(vaultUri string) resource.StateRefreshFunc {
